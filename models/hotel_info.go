@@ -20,3 +20,7 @@ type AddHotelJson struct {
 	Description string `json:"description"`
 	Rooms       []int  `json:"room_prices"`
 }
+
+type GetAvailableHotelRoomsJson struct {
+	HotelId int `json:"hotel_id"`
+}
