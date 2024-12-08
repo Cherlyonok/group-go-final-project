@@ -1,41 +1,14 @@
-package hotel_svc
+package hotel_rest
 
 import (
-	"database/sql"
 	"encoding/json"
-	"fmt"
 	"net/http"
+	"project/internal/hotel_svc"
 	"project/models"
 )
 
 type HotelService struct {
-	db *sql.DB
-}
-
-func CreateHotelService(dbURL string) (HotelService, error) {
-	db, err := sql.Open("postgres", dbURL)
-	if err != nil {
-		return HotelService{}, fmt.Errorf("failed to connect to database: %w", err)
-	}
-	if err := db.Ping(); err != nil {
-		return HotelService{}, fmt.Errorf("failed to ping database: %w", err)
-	}
-	fmt.Println("Connected to database successfully!")
-	create_hotels_query := `CREATE TABLE IF NOT EXISTS Hotels (
-		id SERIAL PRIMARY KEY,
-		owner_id INT,
-    	name VARCHAR(100) NOT NULL,
-    	description VARCHAR(255) NOT NULL
-	)`
-	create_rooms_query := `CREATE TABLE IF NOT EXISTS Rooms (
-		id SERIAL PRIMARY KEY,
-		hotel_id INT,
-		price INT,
-    	available BOOL
-	)`
-	db.Exec(create_hotels_query)
-	db.Exec(create_rooms_query)
-	return HotelService{db}, nil
+	HotelDB *hotel_svc.HotelDB
 }
 
 func (service *HotelService) AddHotel(w http.ResponseWriter, r *http.Request) {
@@ -52,13 +25,13 @@ func (service *HotelService) AddHotel(w http.ResponseWriter, r *http.Request) {
 	add_hotel_query := "INSERT INTO Hotels (owner_id, name, description) VALUES ($1, $2, $3) RETURNING id"
 	add_room_query := "INSERT INTO Rooms (hotel_id, price, available) VALUES ($1, $2, $3)"
 	var id int
-	err = service.db.QueryRow(add_hotel_query, hotel_data.OwnerId, hotel_data.Name, hotel_data.Description).Scan(&id)
+	err = service.HotelDB.Db.QueryRow(add_hotel_query, hotel_data.OwnerId, hotel_data.Name, hotel_data.Description).Scan(&id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotAcceptable)
 		return
 	}
 	for _, room_price := range hotel_data.Rooms {
-		service.db.Exec(add_room_query, id, room_price, true)
+		service.HotelDB.Db.Exec(add_room_query, id, room_price, true)
 	}
 	w.Write([]byte("Succesfully added hotel"))
 }
@@ -69,7 +42,7 @@ func (service *HotelService) FindHotels(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	var hotels []models.HotelInfo
-	rows, err := service.db.Query("SELECT id, owner_id, name, description FROM Hotels")
+	rows, err := service.HotelDB.Db.Query("SELECT id, owner_id, name, description FROM Hotels")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotAcceptable)
 	}
@@ -98,7 +71,7 @@ func (service *HotelService) GetAvailableHotelRooms(w http.ResponseWriter, r *ht
 	}
 
 	var rooms []models.RoomInfo
-	rows, err := service.db.Query("SELECT id, hotel_id, price, available FROM Rooms WHERE hotel_id = $1 AND available = TRUE", request_json.HotelId)
+	rows, err := service.HotelDB.Db.Query("SELECT id, hotel_id, price, available FROM Rooms WHERE hotel_id = $1 AND available = TRUE", request_json.HotelId)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusNotAcceptable)
 	}

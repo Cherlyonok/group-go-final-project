@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -47,6 +48,7 @@ func (server *Server) Start() {
 
 	g, gCtx := errgroup.WithContext(ctx)
 	g.Go(func() error {
+		log.Printf("http server listening at %v", httpServer.Addr)
 		return httpServer.ListenAndServe()
 	})
 	g.Go(func() error {
@@ -54,6 +56,6 @@ func (server *Server) Start() {
 		return httpServer.Shutdown(context.Background())
 	})
 	if err := g.Wait(); err != nil {
-		fmt.Printf("exit reason: %s \n", err)
+		fmt.Printf("%s \n", err)
 	}
 }
