@@ -25,7 +25,7 @@ func CreateHotelService(dbURL string) (HotelService, error) {
 		id SERIAL PRIMARY KEY,
 		owner_id INT,
     	name VARCHAR(100) NOT NULL,
-    	location VARCHAR(255) NOT NULL
+    	description VARCHAR(255) NOT NULL
 	)`
 	create_rooms_query := `CREATE TABLE IF NOT EXISTS Rooms (
 		id SERIAL PRIMARY KEY,
@@ -49,10 +49,10 @@ func (service *HotelService) AddHotel(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	add_hotel_query := "INSERT INTO Hotels (owner_id, name, location) VALUES ($1, $2, $3) RETURNING id"
+	add_hotel_query := "INSERT INTO Hotels (owner_id, name, description) VALUES ($1, $2, $3) RETURNING id"
 	add_room_query := "INSERT INTO Rooms (hotel_id, price, available) VALUES ($1, $2, $3)"
 	var id int
-	err = service.db.QueryRow(add_hotel_query, hotel_data.OwnerId, hotel_data.Name, hotel_data.Location).Scan(&id)
+	err = service.db.QueryRow(add_hotel_query, hotel_data.OwnerId, hotel_data.Name, hotel_data.Description).Scan(&id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusMethodNotAllowed)
 		return
