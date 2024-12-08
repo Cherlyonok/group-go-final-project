@@ -1,19 +1,26 @@
 package models
 
 type RoomInfo struct {
+	Id        int
+	HotelId   int
 	Price     int
 	Available bool
 }
 
 type HotelInfo struct {
-	Name  string
-	Stars int
-	Rooms []RoomInfo
+	Id          int
+	OwnerId     int
+	Name        string
+	Description string
 }
 
 type AddHotelJson struct {
-	OwnerId  int    `json:"owner_id"`
-	Name     string `json:"name"`
-	Location string `json:"location"`
-	Rooms    []int  `json:"room_prices"`
+	OwnerId     int    `json:"owner_id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Rooms       []int  `json:"room_prices"`
+}
+
+type GetAvailableHotelRoomsJson struct {
+	HotelId int `json:"hotel_id"`
 }

@@ -14,7 +14,7 @@ func main() {
 	requests := []server.Request{
 		{Handler: hotel_service.AddHotel, Path: "/hotels/add"},
 		{Handler: hotel_service.FindHotels, Path: "/hotels/find"},
-		{Handler: hotel_service.GetRoomPrice, Path: "/hotels/get_room_price"},
+		{Handler: hotel_service.GetAvailableHotelRooms, Path: "/hotels/available_rooms"},
 	}
 	for _, val := range requests {
 		hotel_server.AddRequest(val)
