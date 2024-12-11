@@ -1,2 +1,2 @@
-# raw-go-final-project
-lol we are hiding our project
+# group-go-final-project
+hi there it's our project)
