@@ -25,6 +25,7 @@ func CreateBookingService(dbURL string) (BookingDB, error) {
 		id SERIAL PRIMARY KEY,
 		client_id INT NOT NULL,
     	room_id INT NOT NULL,
+    	hotel_id INT NOT NULL,
 		start_date DATE NOT NULL,
 		end_date DATE NOT NULL
 	)`
