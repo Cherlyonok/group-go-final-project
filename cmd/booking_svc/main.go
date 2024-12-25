@@ -1,4 +1,4 @@
-package booking_svc
+package main
 
 import (
 	"fmt"
@@ -31,7 +31,7 @@ func main() {
 
 	wg.Add(2)
 
-	go startHttpServer(&wg, "8080", &bookingService, "localhost:8081")
+	go startHttpServer(&wg, "8082", &bookingService, "localhost:8081")
 
 	wg.Wait()
 	fmt.Println("Program executed.")
