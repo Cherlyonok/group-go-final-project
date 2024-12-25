@@ -16,7 +16,7 @@ type BookingService struct {
 	HotelClient hotel_grpc.HotelServiceClient
 }
 
-func (service *BookingService) NewBookingService(bookingDB *booking_svc.BookingDB, hotelServiceAddr string) *BookingService {
+func NewBookingService(bookingDB *booking_svc.BookingDB, hotelServiceAddr string) *BookingService {
 
 	conn, err := grpc.Dial(hotelServiceAddr, grpc.WithInsecure())
 	if err != nil {
