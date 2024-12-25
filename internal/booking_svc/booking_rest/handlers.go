@@ -1,6 +1,7 @@
 package booking_rest
 
 import (
+	"context"
 	"encoding/json"
 	"google.golang.org/grpc"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"project/internal/hotel_svc/hotel_grpc/proto/hotel_grpc"
 	"project/models"
 	"strconv"
+	"time"
 )
 
 type BookingService struct {
@@ -29,6 +31,19 @@ func NewBookingService(bookingDB *booking_svc.BookingDB, hotelServiceAddr string
 	}
 }
 
+func (service *BookingService) GetAvailableRooms(hotelID int32) ([]*hotel_grpc.RoomInfo, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	defer cancel()
+
+	resp, err := service.HotelClient.GetRoomsByHotel(ctx, &hotel_grpc.GetRoomsByHotelRequest{HotelId: hotelID})
+	if err != nil {
+		log.Printf("failed to get available rooms: %v", err)
+		return nil, err
+	}
+
+	return resp.Rooms, nil
+}
+
 func (service *BookingService) AddBooking(w http.ResponseWriter, r *http.Request) {
 	if r.Method != "POST" {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -42,9 +57,38 @@ func (service *BookingService) AddBooking(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	rooms, err := service.GetAvailableRooms(int32(booking.HotelId))
+	if err != nil {
+		http.Error(w, "can't fetch available rooms", http.StatusInternalServerError)
+		return
+	}
+
+	var price int
+	isFound := false
+	for _, room := range rooms {
+		if room.Id == int32(booking.RoomId) {
+			if !room.Available {
+				http.Error(w, "room is unavailable", http.StatusBadRequest)
+			}
+			price = int(room.Price)
+			isFound = true
+		}
+	}
+
+	if !isFound {
+		http.Error(w, "room not found", http.StatusBadRequest)
+	}
+	start, _ := time.Parse("2024-11-09", booking.StartDate)
+	finish, _ := time.Parse("2024-11-09", booking.EndDate)
+	diff := int(finish.Sub(start).Hours() / 24)
+
+	finalPrice := price * diff
+	// send final price to payment system
+	finalPrice += 0 // имитация использования
+
 	query := `INSERT INTO Bookings (client_id, room_id, hotel_id, start_date, end_date) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	id := 0
-	err := service.BookingDB.Db.QueryRow(query, booking.ClientId, booking.RoomId, booking.HotelId, booking.StartDate, booking.EndDate).Scan(&id)
+	err = service.BookingDB.Db.QueryRow(query, booking.ClientId, booking.RoomId, booking.HotelId, booking.StartDate, booking.EndDate).Scan(&id)
 	if err != nil {
 		http.Error(w, "can't add this booking to database", http.StatusNotAcceptable)
 		return
